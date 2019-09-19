@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -78,12 +79,13 @@ func downloadFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	w.Header().Set("ETag", etag)
 
 	// Get the content
-	contentType, err := getFileContentType(filelocation)
+	contentType, _, err := mimetype.DetectFile(filelocation)
 	if err != nil {
 		sendInternalError(w, err)
 		return
 	}
 	w.Header().Set("Content-type", contentType)
+	log.Println(filelocation + ":" + contentType)
 	http.ServeFile(w, r, filelocation)
 }
 
@@ -104,12 +106,14 @@ func serveStatic(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("ETag", etag)
 
 	// Get the content
-	contentType, err := getFileContentType(filelocation)
+	contentType, _, err := mimetype.DetectFile(filelocation)
+	// getFileContentType(filelocation)
 	if err != nil {
 		sendInternalError(w, err)
 		return
 	}
 	w.Header().Set("Content-type", contentType)
+	log.Println(contentType)
 	http.ServeFile(w, r, filelocation)
 }
 

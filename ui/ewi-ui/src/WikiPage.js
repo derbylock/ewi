@@ -36,9 +36,16 @@ class WikiPage extends Component {
         .then(response => {
             var mdData = response.data;
             console.info(mdData);
-            mdData = mdData.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, (all, text, link) => {
+            mdData = mdData.replace(/\[([^\]]*)\]\(([^\)]+)\)/g, (all, text, link) => {
                 return "[" + text + "](" + link.replace(/\s/, "-") + ")";
             });
+            const imageExtensions = [".jpg", ".png", ".bmp", ".tiff", ".svg", ".gif", ".png"]
+            imageExtensions.forEach(imageExtension => {
+                mdData = mdData.replace(new RegExp("!\\[([^\\]]*)\\]\\(([^\\)]+)" +imageExtension +"\\)", "g"), (all, text, link) => {
+                    return "![" + text + "]("+process.env.REACT_APP_EWI_SERVER_PATH + "repo/files/" + link.replace(/\s/, "-") + imageExtension + ")";
+                });
+            });
+
             this.setState({data: mdData});
         })
         .catch(error => {console.log(error); this.setState({data: ""});});

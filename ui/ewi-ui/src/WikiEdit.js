@@ -45,8 +45,14 @@ class WikiEdit extends Component {
         .then(response => {
             var mdData = response.data;
             console.info(mdData);
-            mdData = mdData.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, (all, text, link) => {
+            mdData = mdData.replace(/\[([^\]]*)\]\(([^\)]+)\)/g, (all, text, link) => {
                 return "[" + text + "](" + link.replace(/\s/, "-") + ")";
+            });
+            const imageExtensions = [".jpg", ".png", ".bmp", ".tiff", ".svg", ".gif"]
+            imageExtensions.forEach(imageExtension => {
+                mdData = mdData.replace(new RegExp("!\\[([^\\]]*)\\]\\(([^\\)]+)" +imageExtension +"\\)", "g"), (all, text, link) => {
+                    return "![" + text + "]("+process.env.REACT_APP_EWI_SERVER_PATH + "repo/files/" + link.replace(/\s/, "-") + imageExtension + ")";
+                });
             });
             this.setState({data: mdData});
         })
@@ -90,9 +96,14 @@ class WikiEdit extends Component {
             <Navbar>
               <NavbarGroup align={Alignment.RIGHT}>
                 <Button className={Classes.MINIMAL} icon="tick" text="Save" onClick={() => {
-                    console.info(this.editorRef.current.getInstance().getMarkdown());
+                    var markdown = this.editorRef.current.getInstance().getMarkdown();
+                    const imageExtensions = [".jpg", ".png", ".bmp", ".tiff", ".svg"]
+                    imageExtensions.forEach(imageExtension => {
+                        markdown = markdown.replace("]("+process.env.REACT_APP_EWI_SERVER_PATH + "repo/files/", "](");
+                    });
+                    console.info(markdown);
                     axios
-                    .put(process.env.REACT_APP_EWI_SERVER_PATH + "repo/files" + this.state.path, this.editorRef.current.getInstance().getMarkdown())
+                    .put(process.env.REACT_APP_EWI_SERVER_PATH + "repo/files" + this.state.path, markdown)
                     .then(r => {
                         this.setState({redirect: true});
                         this.props.history.push(this.state.path);
