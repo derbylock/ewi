@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/julienschmidt/httprouter"
@@ -16,8 +17,18 @@ import (
 const maxUploadSizeRepo = 1024 * 1024 * 1024 // 1024 MB
 var repoPath *string
 var staticPath *string
+var repoMutex = &sync.Mutex{}
 
 func uploadFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	repoMutex.Lock()
+	defer repoMutex.Unlock()
+	pcp := false
+	pullCommitPush, ok := r.URL.Query()["pcp"]
+	if ok {
+		if pullCommitPush[0] == "true" {
+			pcp = true
+		}
+	}
 	filename := ps.ByName("filename")
 	filelocation := filepath.Join(*repoPath, filename)
 
@@ -28,6 +39,10 @@ func uploadFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	defer r.Body.Close()
 
 	fmt.Printf("File: %s\n", filelocation)
+
+	if pcp {
+		gitPull(w, r, ps)
+	}
 
 	// write file
 	newFile, err := os.Create(filelocation)
@@ -45,18 +60,41 @@ func uploadFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		renderError(w, "CANT_WRITE_FILE_2", http.StatusInternalServerError)
 		return
 	}
+	if pcp {
+		newFile.Close()
+		gitCommit(w, r, ps)
+		gitPush(w, r, ps)
+	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(204)
 }
 
 func removeFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	repoMutex.Lock()
+	defer repoMutex.Unlock()
+	pcp := false
+	pullCommitPush, ok := r.URL.Query()["pcp"]
+	if ok {
+		if pullCommitPush[0] == "true" {
+			pcp = true
+		}
+	}
 	filename := ps.ByName("filename")
 	filelocation := filepath.Join(*repoPath, filename)
+
+	if pcp {
+		gitPull(w, r, ps)
+	}
 	// remove file from disk
 	if err := os.Remove(filelocation); err != nil && !os.IsNotExist(err) {
 		sendInternalError(w, err)
 		return
+	}
+
+	if pcp {
+		gitCommit(w, r, ps)
+		gitPush(w, r, ps)
 	}
 
 	w.WriteHeader(204)
@@ -90,6 +128,8 @@ func downloadFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 }
 
 func serveStatic(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	repoMutex.Lock()
+	defer repoMutex.Unlock()
 	filename := ps.ByName("static")
 	filelocation := filepath.Join(*staticPath, filename)
 	etag, err := calculateEtag(filelocation)

@@ -39,7 +39,7 @@ class WikiPage extends Component {
             mdData = mdData.replace(/\[([^\]]*)\]\(([^\)]+)\)/g, (all, text, link) => {
                 return "[" + text + "](" + link.replace(/\s/, "-") + ")";
             });
-            const imageExtensions = [".jpg", ".png", ".bmp", ".tiff", ".svg", ".gif", ".png"]
+            const imageExtensions = [".jpg", ".png", ".bmp", ".tiff", ".svg", ".gif"]
             imageExtensions.forEach(imageExtension => {
                 mdData = mdData.replace(new RegExp("!\\[([^\\]]*)\\]\\(([^\\)]+)" +imageExtension +"\\)", "g"), (all, text, link) => {
                     return "![" + text + "]("+process.env.REACT_APP_EWI_SERVER_PATH + "repo/files/" + link.replace(/\s/, "-") + imageExtension + ")";

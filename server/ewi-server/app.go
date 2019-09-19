@@ -60,6 +60,12 @@ func runServer() {
 	router.DELETE("/repo/files/*filename", removeFile)
 	router.GET("/repo/files/*filename", downloadFile)
 
+	router.GET("/git/exists", gitExists)
+	router.POST("/git/clone", gitClone)
+	router.POST("/git/commit", gitCommit)
+	router.POST("/git/push", gitPush)
+	router.POST("/git/pull", gitPull)
+
 	router.HandlerFunc(http.MethodGet, "/debug/pprof/", pprof.Index)
 	router.HandlerFunc(http.MethodGet, "/debug/pprof/cmdline", pprof.Cmdline)
 	router.HandlerFunc(http.MethodGet, "/debug/pprof/profile", pprof.Profile)
