@@ -14,6 +14,8 @@ import './github.css';
 
 import MarkdownGithub from 'react-markdown-github'
 
+import store from "store"
+
 import {
   Alignment,
   Button,
@@ -24,6 +26,7 @@ import {
   NavbarGroup,
   NavbarHeading,
   Switch,
+  Spinner,
 } from "@blueprintjs/core";
 
 import 'codemirror/lib/codemirror.css';
@@ -36,40 +39,66 @@ class WikiEdit extends Component {
     editorRef = React.createRef();
     constructor(props) {
         super()
-        this.state = {path: props.path};
+        this.state = {path: props.path, spinner: false};
     }
 
     componentDidMount() {
-        axios
-        .get(process.env.REACT_APP_EWI_SERVER_PATH + "repo/files" + this.state.path)
-        .then(response => {
-            var mdData = response.data;
-            console.info(mdData);
-            mdData = mdData.replace(/\[([^\]]*)\]\(([^\)]+)\)/g, (all, text, link) => {
-                return "[" + text + "](" + link.replace(/\s/, "-") + ")";
-            });
-            const imageExtensions = [".jpg", ".png", ".bmp", ".tiff", ".svg", ".gif"]
-            imageExtensions.forEach(imageExtension => {
-                mdData = mdData.replace(new RegExp("!\\[([^\\]]*)\\]\\(([^\\)]+)" +imageExtension +"\\)", "g"), (all, text, link) => {
-                    return "![" + text + "]("+process.env.REACT_APP_EWI_SERVER_PATH + "repo/files/" + link.replace(/\s/, "-") + imageExtension + ")";
-                });
-            });
-            this.setState({data: mdData});
-        })
-        .catch(error => {console.log(error); this.setState({data: " "});});
+        this.updatePage();
+    }
+
+    updatePage() {
+        const path = this.props.path;
+        this.setState({data: null, path: path});
+        var settings = store.get("ewi-settings")
+        settings= settings || {};
+        if (settings.author && settings.email && settings.login && settings.pass){
+            axios
+            .post(process.env.REACT_APP_EWI_SERVER_PATH + "git/pull" + "?user=" + encodeURIComponent(settings.login) + "&pass=" + encodeURIComponent(settings.pass), null)
+            .then(response => {
+
+                axios
+                .get(process.env.REACT_APP_EWI_SERVER_PATH + "repo/files" + path, {headers: {'Cache-Control': 'no-cache'}})
+                .then(response => {
+                    var mdData = response.data;
+                    console.info(mdData);
+                    mdData = mdData.replace(/\[([^\]]*)\]\(([^\)]+)\)/g, (all, text, link) => {
+                        return "[" + text + "](" + link.replace(/\s/, "-") + ")";
+                    });
+                    const imageExtensions = [".jpg", ".png", ".bmp", ".tiff", ".svg", ".gif"]
+                    imageExtensions.forEach(imageExtension => {
+                        mdData = mdData.replace(new RegExp("!\\[([^\\]]*)\\]\\(([^\\)]+)" +imageExtension +"\\)", "g"), (all, text, link) => {
+                            return "![" + text + "]("+process.env.REACT_APP_EWI_SERVER_PATH + "repo/files/" + link.replace(/\s/, "-") + imageExtension + ")";
+                        });
+                    });
+                    this.setState({data: mdData, path: path});
+                })
+                .catch(error => {console.log(error); this.setState({data: " ", path: path});});
+            })
+            .catch(error => {console.log(error); alert(error); this.setState({data: " ", path: path});});
+        }
     }
 
     componentWillUnmount() {
     }
 
     render() {
+        if (this.state.path != this.props.path) {
+            this.updatePage();
+        }        
         const parseHtml = htmlParser({
             isValidNode: node => node.type !== 'script',
             processingInstructions: []
           });
 
+        var settings = store.get("ewi-settings")
+        settings= settings || {};
+        if (! (settings.author && settings.email && settings.login && settings.pass) ){
+            return <Redirect to='/ewi-settings' />
+        }
+
         return (<div style={{width: "70%", position: "relative", marginLeft: "auto", marginRight: "auto"}} >
             {this.state.data && true &&
+            <div>
         <Editor
             data={this.state.data}
             initialValue={this.state.data}
@@ -92,9 +121,9 @@ class WikiEdit extends Component {
               'table'
             ]}            
             ref={this.editorRef}/>
-        }
             <Navbar>
               <NavbarGroup align={Alignment.RIGHT}>
+                  {!this.state.spinner &&
                 <Button className={Classes.MINIMAL} icon="tick" text="Save" onClick={() => {
                     var markdown = this.editorRef.current.getInstance().getMarkdown();
                     const imageExtensions = [".jpg", ".png", ".bmp", ".tiff", ".svg"]
@@ -102,17 +131,25 @@ class WikiEdit extends Component {
                         markdown = markdown.replace("]("+process.env.REACT_APP_EWI_SERVER_PATH + "repo/files/", "](");
                     });
                     console.info(markdown);
+                    var s = store.get("ewi-settings")
+                    s= s || {};
+
+                    this.setState({spinner: true});
                     axios
-                    .put(process.env.REACT_APP_EWI_SERVER_PATH + "repo/files" + this.state.path, markdown)
+                    .put(process.env.REACT_APP_EWI_SERVER_PATH + "repo/files" + this.state.path + (s.author && "?pcp=true&name="+encodeURIComponent(s.author)+"&email="+encodeURIComponent(s.email)+"&comment="+ encodeURIComponent("Updated docs") + "&user="+encodeURIComponent(s.login)+"&pass=" + encodeURIComponent(s.pass) || ""), markdown)
                     .then(r => {
-                        this.setState({redirect: true});
+                        this.setState({redirect: true, spinner: false});
                         this.props.history.push(this.state.path);
                     })
-                    .catch(error => {console.log(error); alert(error);});
+                    .catch(error => {console.log(error); alert(error); this.setState({spinner: false});});
                 }} />
+                || <Spinner size={Spinner.SIZE_SMALL}/>
+            }
               </NavbarGroup>
             </Navbar>
-                {this.state.redirect && <Redirect to={this.state.path} />}
+            </div>
+        || <Spinner size={Spinner.SIZE_LARGE}/>}
+        {this.state.redirect && <Redirect to={this.state.path} />}
         </div>)
     }
 }

@@ -6,7 +6,7 @@ import SwitchR from 'react-router-dom/Switch';
 import BrowserRouter from 'react-router-dom/BrowserRouter';
 import Route from 'react-router-dom/Route';
 import { Redirect } from 'react-router-dom'
-import { withRouter } from "react-router-dom";
+import { withRouter, Link } from "react-router-dom";
 
 import {
   Alignment,
@@ -36,13 +36,15 @@ class MainView extends Component {
             <div>
             <Navbar>
             <NavbarGroup align={Alignment.LEFT}>
-              <NavbarHeading>{path}</NavbarHeading>
+              <Link to="/ewi-settings"><Button className={Classes.MINIMAL} icon="settings" tooltip="Settings" /></Link>
+              <NavbarHeading><h6>{path}</h6></NavbarHeading>
             </NavbarGroup>
             <NavbarGroup align={Alignment.RIGHT}>
               <NavbarHeading><span style={{color: "green"}}>E</span>asy<span style={{color: "green"}}>WI</span>ki</NavbarHeading>
               <NavbarDivider />
-              <a href="/"><Button className={Classes.MINIMAL} icon="home" text="Home" /></a>
-              <a href={"/edit" + path}><Button className={Classes.MINIMAL} icon="edit" text="Edit" /></a>
+              <Link to="/"><Button className={Classes.MINIMAL} icon="home" text="Home" /></Link>
+              <Link to="/ewi-uploadFile"><Button className={Classes.MINIMAL} icon="upload" text="Upload file" /></Link>
+              <Link to={"/edit" + path}><Button className={Classes.MINIMAL} icon="edit" text="Edit" /></Link>
             </NavbarGroup>
           </Navbar>
           <table width="100%" class="mainparts" >

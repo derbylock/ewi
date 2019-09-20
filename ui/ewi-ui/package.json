@@ -11,12 +11,14 @@
     "react": "^16.9.0",
     "react-confirm-alert": "^2.4.1",
     "react-dom": "^16.9.0",
+    "react-file-uploader": "^1.0.0",
     "react-markdown": "^4.2.2",
     "react-markdown-github": "^3.3.1",
     "react-router-dom": "^5.0.1",
     "react-scripts": "3.1.1",
     "remark-toc": "^6.0.0",
-    "session-storage-cache": "^1.0.4"
+    "session-storage-cache": "^1.0.4",
+    "store": "^2.0.12"
   },
   "scripts": {
     "start": "react-scripts start",

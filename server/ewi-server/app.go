@@ -17,6 +17,7 @@ import (
 
 var buildID []byte
 var httpPort *int
+var httpStaticPort *int
 var buildNumber *string
 
 var emptyState map[string]interface{}
@@ -32,7 +33,7 @@ func enableCors(w *http.ResponseWriter) {
 func setupResponse(w *http.ResponseWriter, req *http.Request) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, PATCH")
-	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Cache-Control")
 }
 
 type corsRouter struct {
@@ -56,6 +57,7 @@ func runServer() {
 	router := httprouter.New()
 	router.GET("/health", getHealth)
 
+	router.POST("/repo/files/*filename", uploadFilesMultipart)
 	router.PUT("/repo/files/*filename", uploadFile)
 	router.DELETE("/repo/files/*filename", removeFile)
 	router.GET("/repo/files/*filename", downloadFile)
@@ -107,10 +109,19 @@ func PrintMemUsage() {
 	fmt.Printf("\tNumGC = %v\n", m.NumGC)
 }
 
+func runStaticServer() {
+	fs := http.FileServer(http.Dir(*staticPath))
+  http.Handle("/", fs)
+
+  log.Println("Listening...")
+  http.ListenAndServe(":"+ strconv.Itoa(*httpStaticPort), nil)
+}
+
 func main() {
 	PrintMemUsage()
 	emptyState = make(map[string]interface{})
 	httpPort = flag.Int("port", 8888, "server's HTTP port")
+	httpStaticPort = flag.Int("staticPort", 80, "server's static HTTP port")
 	strBuildID := string(buildID)
 	buildNumber = flag.String("build", strBuildID, "build number for the health endpoint")
 	gitRepoURI = flag.String("gitRepoURI", "https://github.com/derbylock/ewi.git", "Git repository URI")
@@ -119,5 +130,6 @@ func main() {
 	repoPath = flag.String("repoPath", "/var/lib/ewi-server/repo", "The path of the repository")
 	staticPath = flag.String("staticPath", "/var/lib/ewi-server/static", "the path of the static content (for UI served by Go app)")
 	flag.Parse()
+	go runStaticServer()
 	runServer()
 }

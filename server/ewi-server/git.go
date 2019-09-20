@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -12,6 +13,21 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 )
+
+// ErrUserNotSpecified User not specified error
+var ErrUserNotSpecified = errors.New("User not specified")
+
+// ErrPasswordNotSpecified Password not specified error
+var ErrPasswordNotSpecified = errors.New("Password not specified")
+
+// ErrNameNotSpecified Name not specified error
+var ErrNameNotSpecified = errors.New("Name not specified")
+
+// ErrEmailNotSpecified Email not specified error
+var ErrEmailNotSpecified = errors.New("Email not specified")
+
+// ErrCommentNotSpecified Comment not specified error
+var ErrCommentNotSpecified = errors.New("Comment not specified")
 
 func gitExists(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	repoMutex.Lock()
@@ -69,36 +85,48 @@ func gitClone(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 func gitCommit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	repoMutex.Lock()
 	defer repoMutex.Unlock()
-	gitRepo, err := git.PlainOpen(*repoPath)
+	err := gitCommitNoLock(w, r, ps)
+	if err != nil && (errors.Is(err, ErrUserNotSpecified) ||
+		errors.Is(err, ErrPasswordNotSpecified) ||
+		errors.Is(err, ErrNameNotSpecified) ||
+		errors.Is(err, ErrEmailNotSpecified) ||
+		errors.Is(err, ErrCommentNotSpecified)) {
+		w.WriteHeader(400)
+		return
+	}
+
 	if err != nil {
 		sendInternalError(w, err)
 		return
+	}
+	w.WriteHeader(204)
+}
+
+func gitCommitNoLock(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	gitRepo, err := git.PlainOpen(*repoPath)
+	if err != nil {
+		return err
 	}
 	workTree, err := gitRepo.Worktree()
 	if err != nil {
-		sendInternalError(w, err)
-		return
+		return err
 	}
 	_, err = workTree.Add(".")
 	if err != nil {
-		sendInternalError(w, err)
-		return
+		return err
 	}
 
 	name, ok := r.URL.Query()["name"]
 	if !ok {
-		w.WriteHeader(400)
-		return
+		return ErrNameNotSpecified
 	}
 	email, ok := r.URL.Query()["email"]
 	if !ok {
-		w.WriteHeader(400)
-		return
+		return ErrEmailNotSpecified
 	}
 	comment, ok := r.URL.Query()["comment"]
 	if !ok {
-		w.WriteHeader(400)
-		return
+		return ErrCommentNotSpecified
 	}
 	_, err = workTree.Commit(comment[0], &git.CommitOptions{
 		Author: &object.Signature{
@@ -108,34 +136,24 @@ func gitCommit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		},
 	})
 	if err != nil {
-		sendInternalError(w, err)
-		return
+		return err
 	}
-	w.WriteHeader(204)
+	return nil
 }
 
 func gitPush(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	repoMutex.Lock()
 	defer repoMutex.Unlock()
-	username, ok := r.URL.Query()["user"]
-	if !ok {
+	err := gitPushNoLock(w, r, ps)
+	if err != nil && (errors.Is(err, ErrUserNotSpecified) ||
+		errors.Is(err, ErrPasswordNotSpecified) ||
+		errors.Is(err, ErrNameNotSpecified) ||
+		errors.Is(err, ErrEmailNotSpecified) ||
+		errors.Is(err, ErrCommentNotSpecified)) {
 		w.WriteHeader(400)
 		return
 	}
-	password, ok := r.URL.Query()["pass"]
-	if !ok {
-		w.WriteHeader(400)
-		return
-	}
-	gitRepo, err := git.PlainOpen(*repoPath)
-	if err != nil {
-		sendInternalError(w, err)
-		return
-	}
-	err = gitRepo.Push(&git.PushOptions{Auth: &githttp.BasicAuth{
-		Username: username[0],
-		Password: password[0],
-	}})
+
 	if err != nil {
 		sendInternalError(w, err)
 		return
@@ -143,36 +161,85 @@ func gitPush(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.WriteHeader(204)
 }
 
-func gitPull(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	repoMutex.Lock()
-	defer repoMutex.Unlock()
+func gitPushNoLock(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
 	username, ok := r.URL.Query()["user"]
 	if !ok {
-		w.WriteHeader(400)
-		return
+		return ErrUserNotSpecified
 	}
 	password, ok := r.URL.Query()["pass"]
 	if !ok {
-		w.WriteHeader(400)
-		return
+		return ErrPasswordNotSpecified
 	}
 	gitRepo, err := git.PlainOpen(*repoPath)
 	if err != nil {
-		sendInternalError(w, err)
-		return
+		return err
 	}
-	workTree, err := gitRepo.Worktree()
-	if err != nil {
-		sendInternalError(w, err)
-		return
-	}
-	err = workTree.Pull(&git.PullOptions{RemoteName: "origin", Force: true, Auth: &githttp.BasicAuth{
+	err = gitRepo.Push(&git.PushOptions{Auth: &githttp.BasicAuth{
 		Username: username[0],
 		Password: password[0],
 	}})
+	if err != nil && err.Error() != "already up-to-date" {
+		return err
+	}
+	return nil
+}
+
+func gitPull(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	repoMutex.Lock()
+	defer repoMutex.Unlock()
+	err := gitPullNoLock(w, r, ps)
+	if err != nil && (errors.Is(err, ErrUserNotSpecified) ||
+		errors.Is(err, ErrPasswordNotSpecified) ||
+		errors.Is(err, ErrNameNotSpecified) ||
+		errors.Is(err, ErrEmailNotSpecified) ||
+		errors.Is(err, ErrCommentNotSpecified)) {
+		w.WriteHeader(400)
+		return
+	}
+
 	if err != nil {
 		sendInternalError(w, err)
 		return
 	}
 	w.WriteHeader(204)
+}
+
+func gitPullNoLock(w http.ResponseWriter, r *http.Request, ps httprouter.Params) error {
+	username, ok := r.URL.Query()["user"]
+	if !ok {
+		gitRepo, err := git.PlainOpen(*repoPath)
+		if err != nil {
+			return err
+		}
+		workTree, err := gitRepo.Worktree()
+		if err != nil {
+			return err
+		}
+		err = workTree.Pull(&git.PullOptions{RemoteName: "origin", Force: true})
+		if err != nil && err.Error() != "already up-to-date" {
+			return err
+		}
+		return nil
+	}
+	password, ok := r.URL.Query()["pass"]
+	if !ok {
+		return ErrPasswordNotSpecified
+	}
+	gitRepo, err := git.PlainOpen(*repoPath)
+	if err != nil {
+		return err
+	}
+	workTree, err := gitRepo.Worktree()
+	if err != nil {
+		return err
+	}
+	err = workTree.Pull(&git.PullOptions{RemoteName: "origin", Force: true, Auth: &githttp.BasicAuth{
+		Username: username[0],
+		Password: password[0],
+	}})
+	if err != nil && err.Error() != "already up-to-date" {
+		return err
+	}
+	w.WriteHeader(204)
+	return nil
 }
