@@ -8,6 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import { withRouter, Link } from 'react-router-dom'
 
 import toc from 'remark-toc'
+import plantumlEncoder from 'plantuml-encoder'
 
 import './github.css';
 
@@ -24,6 +25,12 @@ import {
     NavbarHeading,
     Switch,
 } from "@blueprintjs/core";
+import { Editor, Viewer } from '@toast-ui/react-editor'
+import 'tui-editor/dist/tui-editor-extChart';
+import 'tui-editor/dist/tui-editor-extTable';
+import 'tui-editor/dist/tui-editor-extUML';
+import 'tui-editor/dist/tui-editor-extColorSyntax';
+import 'tui-editor/dist/tui-editor-extScrollSync';
 
 function RouterLink(props) {
     return (
@@ -55,6 +62,9 @@ class WikiPage extends Component {
                 mdData = mdData.replace(/\[([^\]]*)\]\(([^\)]+)\)/g, (all, text, link) => {
                     return "[" + text + "](" + link.replace(/\s/, "-") + ")";
                 });
+                mdData = mdData.replace(/```uml(.+)?```/g, (all, text) => {
+                    return "![text](http://www.plantuml.com/plantuml/img/" + plantumlEncoder.encode(text) + ")";
+                });                
                 const imageExtensions = [".jpg", ".png", ".bmp", ".tiff", ".svg", ".gif"]
                 imageExtensions.forEach(imageExtension => {
                     mdData = mdData.replace(new RegExp("!\\[([^\\]]*)\\]\\(([^\\)]+)" + imageExtension + "\\)", "g"), (all, text, link) => {
@@ -81,6 +91,31 @@ class WikiPage extends Component {
 
         return (
             <div style={{ width: "100%", position: "relative", marginLeft: "auto", marginRight: "auto" }} >
+                {
+                    /*
+                <Viewer
+                    data={this.state.data}
+                    initialValue={this.state.data}
+                    initialEditType="wysiwyg"
+                    useCommandShortcut={true}
+                    height="800px"
+                    previewStyle="tab"
+                    exts={[
+                    {
+                        name: 'chart',
+                        minWidth: 100,
+                        maxWidth: 600,
+                        minHeight: 100,
+                        maxHeight: 300
+                    },
+                    'colorSyntax',
+                    'uml',
+                    'mark',
+                    'table'
+                    ]} />
+                    */
+                    }
+                {
                 <ReactMarkdown
                     className="wikipage"
                     source={this.state.data}
@@ -90,6 +125,7 @@ class WikiPage extends Component {
                     plugins={[toc]}
                     renderers={{link: RouterLink}}
                 />
+                }
             </div>)
     }
 }

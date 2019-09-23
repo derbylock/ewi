@@ -110,11 +110,11 @@ func PrintMemUsage() {
 }
 
 func runStaticServer() {
-	fs := http.FileServer(http.Dir(*staticPath))
-  http.Handle("/", fs)
+	fs := FileServerReact(http.Dir(*staticPath))
+	http.Handle("/", fs)
 
-  log.Println("Listening...")
-  http.ListenAndServe(":"+ strconv.Itoa(*httpStaticPort), nil)
+	log.Println("Listening...")
+	http.ListenAndServe(":"+strconv.Itoa(*httpStaticPort), nil)
 }
 
 func main() {

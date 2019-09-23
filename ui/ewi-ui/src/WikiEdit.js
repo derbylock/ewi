@@ -13,6 +13,11 @@ import toc from 'remark-toc'
 import './github.css';
 
 import MarkdownGithub from 'react-markdown-github'
+import 'tui-editor/dist/tui-editor-extChart';
+import 'tui-editor/dist/tui-editor-extTable';
+import 'tui-editor/dist/tui-editor-extUML';
+import 'tui-editor/dist/tui-editor-extColorSyntax';
+import 'tui-editor/dist/tui-editor-extScrollSync';
 
 import store from "store"
 
@@ -32,7 +37,7 @@ import {
 import 'codemirror/lib/codemirror.css';
 import 'tui-editor/dist/tui-editor.min.css';
 import 'tui-editor/dist/tui-editor-contents.min.css';
-import { Editor } from '@toast-ui/react-editor'
+import { Editor, Viewer } from '@toast-ui/react-editor'
 
 
 class WikiEdit extends Component {
@@ -84,12 +89,11 @@ class WikiEdit extends Component {
     render() {
         if (this.state.path != this.props.path) {
             this.updatePage();
-        }        
+        }
         const parseHtml = htmlParser({
             isValidNode: node => node.type !== 'script',
             processingInstructions: []
           });
-
         var settings = store.get("ewi-settings")
         settings= settings || {};
         if (! (settings.author && settings.email && settings.login && settings.pass) ){
@@ -119,7 +123,7 @@ class WikiEdit extends Component {
               'uml',
               'mark',
               'table'
-            ]}            
+            ]}
             ref={this.editorRef}/>
             <Navbar>
               <NavbarGroup align={Alignment.RIGHT}>
