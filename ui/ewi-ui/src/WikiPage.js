@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import axios from 'axios';
 
@@ -12,20 +11,7 @@ import plantumlEncoder from 'plantuml-encoder'
 
 import './github.css';
 
-import MarkdownGithub from 'react-markdown-github'
 
-import {
-    Alignment,
-    Button,
-    Classes,
-    H5,
-    Navbar,
-    NavbarDivider,
-    NavbarGroup,
-    NavbarHeading,
-    Switch,
-} from "@blueprintjs/core";
-import { Editor, Viewer } from '@toast-ui/react-editor'
 import 'tui-editor/dist/tui-editor-extChart';
 import 'tui-editor/dist/tui-editor-extTable';
 import 'tui-editor/dist/tui-editor-extUML';
@@ -62,14 +48,14 @@ class WikiPage extends Component {
                 mdData = mdData.replace(/\[([^\]]*)\]\(([^\)]+)\)/g, (all, text, link) => {
                     return "[" + text + "](" + link.replace(/\s/, "-") + ")";
                 });
-                mdData = mdData.replace(/```uml(.+)?```/g, (all, text) => {
-                    return "![text](http://www.plantuml.com/plantuml/img/" + plantumlEncoder.encode(text) + ")";
-                });                
                 const imageExtensions = [".jpg", ".png", ".bmp", ".tiff", ".svg", ".gif"]
                 imageExtensions.forEach(imageExtension => {
                     mdData = mdData.replace(new RegExp("!\\[([^\\]]*)\\]\\(([^\\)]+)" + imageExtension + "\\)", "g"), (all, text, link) => {
                         return "![" + text + "](" + process.env.REACT_APP_EWI_SERVER_PATH + "repo/files/" + link.replace(/\s/, "-") + imageExtension + ")";
                     });
+                });
+                mdData = mdData.replace(/\`\`\`\s*uml(\s+)((.|\r|\n)+?)\`\`\`/gm, (all, text, code) => {
+                    return "![uml diagramm](http://www.plantuml.com/plantuml/img/" + plantumlEncoder.encode(code) + ")";
                 });
 
                 this.setState({ data: mdData, path: path });

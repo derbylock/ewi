@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import axios from 'axios';
 
@@ -12,16 +11,13 @@ import {
   Alignment,
   Button,
   Classes,
-  H5,
   Navbar,
   NavbarDivider,
   NavbarGroup,
   NavbarHeading,
-  Switch,
   Intent,
   Tooltip
 } from "@blueprintjs/core";
-import WikiPage from './WikiPage';
 import WikiEdit from './WikiEdit';
 import EwiSettings from './EwiSettings';
 import MainView from './MainView';
@@ -105,7 +101,7 @@ class App extends Component {
             >
               <InputGroup id="passwordInput" placeholder="*****" inputRef={this.repoURLPass} rightElement={this.lockButton()} type={this.state.showPassword ? "text" : "password"} />
             </FormGroup>
-            <Button className={Classes.MINIMAL} style={{float: "right"}} icon="git-repo" text="Clone" onClick={val => {
+            <Button className={Classes.MINIMAL} style={{float: "right"}} icon="git-repo" text="Clone" onClick={() => {
                   axios
                   .post(process.env.REACT_APP_EWI_SERVER_PATH + "git/clone?url="+this.repoURLRef.current.value
                     + (this.repoURLLogin.current.value && ("&user="+encodeURIComponent(this.repoURLLogin.current.value)+"&pass="+encodeURIComponent(this.repoURLPass.current.value)) || "")

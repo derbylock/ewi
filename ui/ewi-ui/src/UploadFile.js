@@ -1,41 +1,26 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
-import axios from 'axios';
 
-import htmlParser from 'react-markdown/plugins/html-parser';
-import ReactMarkdown from 'react-markdown';
 import { withRouter } from "react-router-dom";
 import { Redirect } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 
 import  * as FileUploader from "react-file-uploader"
 
-import toc from 'remark-toc'
 
 import './github.css';
 
-import MarkdownGithub from 'react-markdown-github'
 
 import store from "store"
 
 import {
-  Alignment,
   Button,
   Classes,
-  H5,
-  Navbar,
-  NavbarDivider,
-  NavbarGroup,
-  NavbarHeading,
-  Switch,
-  Spinner,
 } from "@blueprintjs/core";
 
 import 'codemirror/lib/codemirror.css';
 import 'tui-editor/dist/tui-editor.min.css';
 import 'tui-editor/dist/tui-editor-contents.min.css';
-import { Editor } from '@toast-ui/react-editor'
 import ReactDOM from 'react-dom';
 
 class UploadFile extends Component {

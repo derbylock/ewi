@@ -1,31 +1,15 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
-import axios from 'axios';
 
-import SwitchR from 'react-router-dom/Switch';
-import BrowserRouter from 'react-router-dom/BrowserRouter';
-import Route from 'react-router-dom/Route';
-import { Redirect } from 'react-router-dom'
 import { FormGroup, InputGroup} from "@blueprintjs/core";
 import { withRouter, Link } from "react-router-dom";
 
 import {
-  Alignment,
   Button,
   Classes,
-  H5,
-  Navbar,
-  NavbarDivider,
-  NavbarGroup,
-  NavbarHeading,
-  Switch,
   Intent,
   Tooltip
 } from "@blueprintjs/core";
-import WikiPage from './WikiPage';
-import WikiEdit from './WikiEdit';
-import MainView from './MainView';
 import store from "store"
 
 class EwiSettings extends Component {

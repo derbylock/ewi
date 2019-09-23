@@ -1,18 +1,13 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import axios from 'axios';
 
-import htmlParser from 'react-markdown/plugins/html-parser';
-import ReactMarkdown from 'react-markdown';
 import { withRouter } from "react-router-dom";
 import { Redirect } from 'react-router-dom'
 
-import toc from 'remark-toc'
 
 import './github.css';
 
-import MarkdownGithub from 'react-markdown-github'
 import 'tui-editor/dist/tui-editor-extChart';
 import 'tui-editor/dist/tui-editor-extTable';
 import 'tui-editor/dist/tui-editor-extUML';
@@ -25,19 +20,15 @@ import {
   Alignment,
   Button,
   Classes,
-  H5,
   Navbar,
-  NavbarDivider,
   NavbarGroup,
-  NavbarHeading,
-  Switch,
   Spinner,
 } from "@blueprintjs/core";
 
 import 'codemirror/lib/codemirror.css';
 import 'tui-editor/dist/tui-editor.min.css';
 import 'tui-editor/dist/tui-editor-contents.min.css';
-import { Editor, Viewer } from '@toast-ui/react-editor'
+import { Editor } from '@toast-ui/react-editor'
 
 
 class WikiEdit extends Component {
@@ -59,7 +50,7 @@ class WikiEdit extends Component {
         if (settings.author && settings.email && settings.login && settings.pass){
             axios
             .post(process.env.REACT_APP_EWI_SERVER_PATH + "git/pull" + "?user=" + encodeURIComponent(settings.login) + "&pass=" + encodeURIComponent(settings.pass), null)
-            .then(response => {
+            .then(() => {
 
                 axios
                 .get(process.env.REACT_APP_EWI_SERVER_PATH + "repo/files" + path, {headers: {'Cache-Control': 'no-cache'}})
@@ -90,10 +81,6 @@ class WikiEdit extends Component {
         if (this.state.path != this.props.path) {
             this.updatePage();
         }
-        const parseHtml = htmlParser({
-            isValidNode: node => node.type !== 'script',
-            processingInstructions: []
-          });
         var settings = store.get("ewi-settings")
         settings= settings || {};
         if (! (settings.author && settings.email && settings.login && settings.pass) ){
@@ -131,7 +118,7 @@ class WikiEdit extends Component {
                 <Button className={Classes.MINIMAL} icon="tick" text="Save" onClick={() => {
                     var markdown = this.editorRef.current.getInstance().getMarkdown();
                     const imageExtensions = [".jpg", ".png", ".bmp", ".tiff", ".svg"]
-                    imageExtensions.forEach(imageExtension => {
+                    imageExtensions.forEach(() => {
                         markdown = markdown.replace("]("+process.env.REACT_APP_EWI_SERVER_PATH + "repo/files/", "](");
                     });
                     console.info(markdown);
@@ -141,7 +128,7 @@ class WikiEdit extends Component {
                     this.setState({spinner: true});
                     axios
                     .put(process.env.REACT_APP_EWI_SERVER_PATH + "repo/files" + this.state.path + (s.author && "?pcp=true&name="+encodeURIComponent(s.author)+"&email="+encodeURIComponent(s.email)+"&comment="+ encodeURIComponent("Updated docs") + "&user="+encodeURIComponent(s.login)+"&pass=" + encodeURIComponent(s.pass) || ""), markdown)
-                    .then(r => {
+                    .then(() => {
                         this.setState({redirect: true, spinner: false});
                         this.props.history.push(this.state.path);
                     })
