@@ -45,6 +45,7 @@ class WikiPage extends Component {
             .then(response => {
                 var mdData = response.data;
                 console.info(mdData);
+                mdData = mdData.replace(/\<br\s*\/?\>/g, "\n");
                 mdData = mdData.replace(/\[([^\]]*)\]\(([^\)]+)\)/g, (all, text, link) => {
                     return "[" + text + "](" + link.replace(/\s/, "-") + ")";
                 });
