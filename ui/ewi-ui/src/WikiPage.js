@@ -21,7 +21,7 @@ import 'tui-editor/dist/tui-editor-extScrollSync';
 function RouterLink(props) {
     return (
       props.href.match(/^(https?:)?\/\//)
-        ? <a href={props.href}>{props.children}</a>
+        ? <a href={props.href} target="_blank">{props.children}</a>
         : <Link to={props.href}>{props.children}</Link>
     );
   }
@@ -108,7 +108,7 @@ class WikiPage extends Component {
                     source={this.state.data}
                     escapeHtml={false}
                     astPlugins={[parseHtml]}
-                    transformLinkUri={(uri) => { return uri + ".md"; }}
+                    transformLinkUri={(uri) => { return uri + ((uri.startsWith("http://") || uri.startsWith("https://"))?"":".md"); }}
                     plugins={[toc]}
                     renderers={{link: RouterLink}}
                 />
