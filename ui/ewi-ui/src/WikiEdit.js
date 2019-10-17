@@ -66,7 +66,7 @@ class WikiEdit extends Component {
                             return "![" + text + "]("+process.env.REACT_APP_EWI_SERVER_PATH + "repo/files/" + link.replace(/\s/, "-") + imageExtension + ")";
                         });
                     });
-                    this.setState({data: mdData, path: path});
+                    this.setState({data: mdData, initialData: mdData, path: path});
                 })
                 .catch(error => {console.log(error); this.setState({data: " ", path: path});});
             })
@@ -91,8 +91,7 @@ class WikiEdit extends Component {
             {this.state.data && true &&
             <div>
         <Editor
-            data={this.state.data}
-            initialValue={this.state.data}
+            initialValue={this.state.initialData}
             initialEditType="wysiwyg"
             useCommandShortcut={true}
             height="800px"
@@ -105,7 +104,7 @@ class WikiEdit extends Component {
                 minHeight: 100,
                 maxHeight: 300
               },
-              /*'scrollSync',*/
+              /* 'scrollSync', */
               'colorSyntax',
               'uml',
               'mark',
