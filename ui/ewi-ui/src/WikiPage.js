@@ -108,7 +108,7 @@ class WikiPage extends Component {
                     source={this.state.data}
                     escapeHtml={false}
                     astPlugins={[parseHtml]}
-                    transformLinkUri={(uri) => { return uri + ((uri.startsWith("http://") || uri.startsWith("https://"))?"":".md"); }}
+                    transformLinkUri={(uri) => { return uri + ((uri && uri.startsWith("http://") || uri && uri.startsWith("https://"))?"":".md"); }}
                     plugins={[toc]}
                     renderers={{link: RouterLink}}
                 />
