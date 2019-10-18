@@ -120,6 +120,7 @@ class WikiEdit extends Component {
                     imageExtensions.forEach(() => {
                         markdown = markdown.replace("]("+process.env.REACT_APP_EWI_SERVER_PATH + "repo/files/", "](");
                     });
+                    markdown = markdown.replace("\\,", ","); // fixing tui-editor bug
                     console.info(markdown);
                     var s = store.get("ewi-settings")
                     s= s || {};
