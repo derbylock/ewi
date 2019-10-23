@@ -16,6 +16,8 @@ import 'tui-editor/dist/tui-editor-extScrollSync';
 
 import store from "store"
 
+import plantumlEncoder from 'plantuml-encoder'
+
 import {
   Alignment,
   Button,
@@ -56,7 +58,6 @@ class WikiEdit extends Component {
                 .get(process.env.REACT_APP_EWI_SERVER_PATH + "repo/files" + path, {headers: {'Cache-Control': 'no-cache'}})
                 .then(response => {
                     var mdData = response.data;
-                    console.info(mdData);
                     mdData = mdData.replace(/\[([^\]]*)\]\(([^\)]+)\)/g, (all, text, link) => {
                         return "[" + text + "](" + link.replace(/\s/, "-") + ")";
                     });
@@ -66,6 +67,10 @@ class WikiEdit extends Component {
                             return "![" + text + "]("+process.env.REACT_APP_EWI_SERVER_PATH + "repo/files/" + link.replace(/\s/, "-") + imageExtension + ")";
                         });
                     });
+                    console.info(mdData);                    
+                    mdData = mdData.replace(/!\[uml diagramm\]\(http:\/\/www.plantuml.com\/plantuml\/img\/([^\\)]+)?\)/gm, (all, code) => {
+                        return "``` uml\n" + plantumlEncoder.decode(code) + "\n```";
+                    });                    
                     this.setState({data: mdData, initialData: mdData, path: path});
                 })
                 .catch(error => {console.log(error); this.setState({data: " ", path: path});});
@@ -121,6 +126,11 @@ class WikiEdit extends Component {
                         markdown = markdown.replace("]("+process.env.REACT_APP_EWI_SERVER_PATH + "repo/files/", "](");
                     });
                     markdown = markdown.replace(/\\,/g, ","); // fixing tui-editor bug
+
+                    markdown = markdown.replace(/\`\`\`\s*uml(\s+)((.|\r|\n)+?)\`\`\`/gm, (all, text, code) => {
+                        return "![uml diagramm](http://www.plantuml.com/plantuml/img/" + plantumlEncoder.encode(code) + ")";
+                    });
+    
                     console.info(markdown);
                     var s = store.get("ewi-settings")
                     s= s || {};
