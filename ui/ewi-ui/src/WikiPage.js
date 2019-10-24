@@ -6,7 +6,6 @@ import htmlParser from 'react-markdown/plugins/html-parser'
 import ReactMarkdown from 'react-markdown'
 import { withRouter, Link } from 'react-router-dom'
 import HtmlToReact from 'html-to-react'
-
 import toc from 'remark-toc'
 import plantumlEncoder from 'plantuml-encoder'
 
@@ -22,9 +21,23 @@ function RouterLink(props) {
     return (
       props.href.match(/^(https?:)?\/\//)
         ? <a href={props.href} target="_blank">{props.children}</a>
-        : <Link to={props.href}>{props.children}</Link>
+        : (props.href.startsWith("#")?<a href={props.href}>{props.children}</a>:<Link to={props.href}>{props.children}</Link>)
     );
   }
+
+  function flatten(text, child) {
+    return typeof child === 'string'
+      ? text + child
+      : React.Children.toArray(child.props.children).reduce(flatten, text)
+  }
+  
+  function HeadingRenderer(props) {
+    var children = React.Children.toArray(props.children)
+    var text = children.reduce(flatten, '')
+    var slug = text.toLowerCase().replace(/\W/g, '-')
+    console.info(text);
+    return React.createElement('h' + props.level, {id: slug}, props.children)
+  }  
 
 class WikiPage extends Component {
     constructor(props) {
@@ -45,7 +58,7 @@ class WikiPage extends Component {
             .then(response => {
                 var mdData = response.data;
                 console.info(mdData);
-                // mdData = mdData.replace(/\<br\s*\/?\>/g, "\n");
+                mdData = mdData.replace(/\<br\s*\/?\>/g, "<br/>\n");
                 mdData = mdData.replace(/\[([^\]]*)\]\(([^\)]+)\)/g, (all, text, link) => {
                     return "[" + text + "](" + link.replace(/\s/, "-") + ")";
                 });
@@ -119,9 +132,9 @@ class WikiPage extends Component {
                     source={this.state.data}
                     escapeHtml={false}
                     // astPlugins={[parseHtml]}
-                    transformLinkUri={(uri) => { return uri + ((uri && uri.startsWith("http://") || uri && uri.startsWith("https://"))?"":".md"); }}
+                    transformLinkUri={(uri) => { return uri + ((uri && uri.startsWith("http://") || uri && uri.startsWith("https://") || uri && uri.startsWith("#"))?"":".md"); }}
                     plugins={[toc]}
-                    renderers={{link: RouterLink}}
+                    renderers={{link: RouterLink, heading: HeadingRenderer}}
                 />
                 }
             </div>)
