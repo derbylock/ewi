@@ -70,7 +70,7 @@ class WikiEdit extends Component {
                     console.info(mdData);                    
                     mdData = mdData.replace(/!\[uml diagramm\]\(http:\/\/www.plantuml.com\/plantuml\/img\/([^\\)]+)?\)/gm, (all, code) => {
                         return "``` uml\n" + plantumlEncoder.decode(code) + "\n```";
-                    });                    
+                    });
                     this.setState({data: mdData, initialData: mdData, path: path});
                 })
                 .catch(error => {console.log(error); this.setState({data: " ", path: path});});
@@ -129,6 +129,10 @@ class WikiEdit extends Component {
 
                     markdown = markdown.replace(/\`\`\`\s*uml(\s+)((.|\r|\n)+?)\`\`\`/gm, (all, text, code) => {
                         return "![uml diagramm](http://www.plantuml.com/plantuml/img/" + plantumlEncoder.encode(code) + ")";
+                    });
+
+                    markdown = markdown.replace(/<br>/gm, (all, text, code) => {
+                        return "\n";
                     });
     
                     console.info(markdown);
